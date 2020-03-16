@@ -1,45 +1,45 @@
-## Package Status
+# About
 
-| Bintray | Windows | Linux & macOS |
-|:--------:|:---------:|:-----------------:|
-|[![Download](https://api.bintray.com/packages/mjvk/public-conan/flatc_installer%3Amjvk/images/download.svg) ](https://bintray.com/mjvk/public-conan/flatc_installer%3Amjvk/_latestVersion)|[![Build status](https://ci.appveyor.com/api/projects/status/kb4flo335xma7fy3?svg=true)](https://ci.appveyor.com/project/mjvk/conan-flatc-installer)|[![Build Status](https://travis-ci.com/mjvk/conan-flatc_installer.svg?branch=testing%2F1.11.0)](https://travis-ci.com/mjvk/conan-flatc_installer)
+## Docker build with `--no-cache`
 
-## Conan.io Information
+```bash
+export MY_IP=$(ip route get 8.8.8.8 | sed -n '/src/{s/.*src *\([^ ]*\).*/\1/p;q}')
+sudo -E docker build \
+    --build-arg PKG_NAME=flatc_conan \
+    --build-arg PKG_CHANNEL=conan/stable \
+    --build-arg PKG_UPLOAD_NAME=flatc_conan/v1.11.0@conan/stable \
+    --build-arg CONAN_EXTRA_REPOS="conan-local http://$MY_IP:8081/artifactory/api/conan/conan False" \
+    --build-arg CONAN_EXTRA_REPOS_USER="user -p password1 -r conan-local admin" \
+    --build-arg CONAN_UPLOAD="conan upload --all -r=conan-local -c --retry 3 --retry-wait 10 --force" \
+    --build-arg BUILD_TYPE=Debug \
+    -f conan_flatc_source.Dockerfile --tag conan_flatc_repoadd_source_install . --no-cache
 
-Bincrafters packages can be found in the following public Conan repository:
+sudo -E docker build \
+    --build-arg PKG_NAME=flatc_conan/v1.11.0 \
+    --build-arg PKG_CHANNEL=conan/stable \
+    --build-arg PKG_UPLOAD_NAME=flatc_conan/v1.11.0@conan/stable \
+    --build-arg CONAN_EXTRA_REPOS="conan-local http://$MY_IP:8081/artifactory/api/conan/conan False" \
+    --build-arg CONAN_EXTRA_REPOS_USER="user -p password1 -r conan-local admin" \
+    --build-arg CONAN_UPLOAD="conan upload --all -r=conan-local -c --retry 3 --retry-wait 10 --force" \
+    --build-arg BUILD_TYPE=Debug \
+    -f conan_flatc_build.Dockerfile --tag conan_flatc_build_package_export_test_upload . --no-cache
 
-[Bincrafters Public Conan Repository on Bintray](https://bintray.com/bincrafters/public-conan)
+# OPTIONAL: clear unused data
+sudo -E docker rmi conan_flatc_*
+```
 
-*Note: You can click the "Set Me Up" button on the Bintray page above for instructions on using packages from this repository.*
+## Local build
 
-## Issues
+```bash
+export PKG_NAME=flatc_conan/v1.11.0@conan/stable
+conan remove $PKG_NAME
+conan create . conan/stable -s build_type=Debug --profile gcc --build missing
+CONAN_REVISIONS_ENABLED=1 CONAN_VERBOSE_TRACEBACK=1 CONAN_PRINT_RUN_COMMANDS=1 CONAN_LOGGING_LEVEL=10 conan upload $PKG_NAME --all -r=conan-local -c --retry 3 --retry-wait 10 --force
+```
 
-If you wish to report an issue or make a request for a Bincrafters package, please do so here:
+## How to diagnose errors in conanfile (CONAN_PRINT_RUN_COMMANDS)
 
-[Bincrafters Community Issues](https://github.com/bincrafters/community/issues)
-
-## General Information
-
-This GIT repository is managed by the Bincrafters team and holds files related to Conan.io.  For detailed information about Bincrafters and Conan.io, please visit the following resources:
-
-[Bincrafters Wiki - Common README](https://github.com/bincrafters/community/wiki/Common-README.md)
-
-[Bincrafters Technical Documentation](http://bincrafters.readthedocs.io/en/latest/)
-
-[Bincrafters Blog](https://bincrafters.github.io)
-
-## License Information
-
-Bincrafters packages are hosted on [Bintray](https://bintray.com) and contain Open-Source software which is licensed by the software's maintainers and NOT Bincrafters.  For each Open-Source package published by Bincrafters, the packaging process obtains the required license files along with the original source files from the maintainer, and includes these license files in the generated Conan packages.
-
-The contents of this GIT repository are completely separate from the software being packaged and therefore licensed separately.  The license for all files contained in this GIT repository are defined in the [LICENSE.md](LICENSE.md) file in this repository.  The licenses included with all Conan packages published by Bincrafters can be found in the Conan package directories in the following locations, relative to the Conan Cache root (`~/.conan` by default):
-
-### License(s) for packaged software:
-
-    ~/.conan/data/<pkg_name>/<pkg_version>/bincrafters/package/<random_package_id>/license/<LICENSE_FILES_HERE>
-
-*Note :   The most common filenames for OSS licenses are `LICENSE` AND `COPYING` without file extensions.*
-
-### License for Bincrafters recipe:
-
-    ~/.conan/data/<pkg_name>/<pkg_version>/bincrafters/export/LICENSE.md
+```bash
+# NOTE: about `--keep-source` see https://bincrafters.github.io/2018/02/27/Updated-Conan-Package-Flow-1.1/
+CONAN_REVISIONS_ENABLED=1 CONAN_VERBOSE_TRACEBACK=1 CONAN_PRINT_RUN_COMMANDS=1 CONAN_LOGGING_LEVEL=10 conan create . conan/stable -s build_type=Debug --profile gcc --build missing --keep-source
+```
